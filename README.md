@@ -50,6 +50,9 @@ the command ``vagrant ssh`` not working. Instead use the
   ``packer-atlas-example0`` or ``vagrant-libvirt`` or the like. Otherwise nodes may
   become isolated from the host system.
 
+* For Ubuntu host OS, does not work with privileged containers due to [apparmor
+  issues](https://github.com/docker/docker/issues/5490).
+
 ## Troubleshooting
 
 You may want to use the command like:
@@ -63,8 +66,9 @@ provision shell scripts.
 For the MySQL OCF RA you may use the command like:
 ```
 `(OCF_RESKEY_additional_parameters="--wsrep-new-cluster")` OCF_RESOURCE_INSTANCE=p_mysql \
-OCF_ROOT=/usr/lib/ocf OCF_RESKEY_test_passwd=password OCF_RESKEY_test_user=wsrep_sst \
-OCF_RESKEY_socket=/var/run/mysqld/mysqld.sock /usr/lib/ocf/resource.d/mysql/mysql monitor
+OCF_ROOT=/usr/lib/ocf OCF_RESKEY_test_passwd=root OCF_RESKEY_test_user=root \
+OCF_RESKEY_pid=/var/run/mysqld/mysqld.pid OCF_RESKEY_socket=/var/run/mysqld/mysqld.sock \
+/usr/lib/ocf/resource.d/mysql/mysql monitor
 ```
 
 The optional part in the brackets will tell the RA to bootsrap a new cluster instead

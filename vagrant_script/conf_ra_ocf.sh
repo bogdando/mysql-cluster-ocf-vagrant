@@ -11,5 +11,11 @@ else
   wget "${OCF_RA_PATH}"  -O /tmp/"${OCF_RA_PROVIDER}"
 fi
 chmod +x /tmp/"${OCF_RA_PROVIDER}"
+mkdir -p /usr/lib/ocf/resource.d/"${OCF_RA_PROVIDER}"
 cp -f /tmp/"${OCF_RA_PROVIDER}" /usr/lib/ocf/resource.d/"${OCF_RA_PROVIDER}"/
+
+# FIXME(bogdando) remove fuel specific OCF RA
+mkdir -p /usr/lib/ocf/resource.d/fuel
+wget https://raw.githubusercontent.com/openstack/fuel-library/master/files/fuel-ha-utils/ocf/ocf-fuel-funcs \
+-O /usr/lib/ocf/resource.d/fuel/ocf-fuel-funcs
 exit 0

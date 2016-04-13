@@ -20,6 +20,9 @@ ocf_ra_provider: mysql
 # How to upload the OCF RA : none/copy from/wget from a given path
 ocf_ra_path: https://raw.githubusercontent.com/openstack/fuel-library/master/files/fuel-ha-utils/ocf/mysql-wss
 upload_method: wget
+# which packages versions to use, or false
+galera_ver: 25.3.5
+mysql_wsrep_ver: 5.6.16-25.5
 # smoke test timeout, includes waiting for the OCF resource to start up
 # and form a cluster, if any
 smoketest_wait: 360

@@ -1,0 +1,5 @@
+set wsrep_on='off';
+delete from mysql.user where user='';
+GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY 'root';
+GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY 'root';
+flush privileges;

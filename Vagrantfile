@@ -21,6 +21,8 @@ DOCKER_MOUNTS = ENV['DOCKER_MOUNTS'] || cfg['docker_mounts']
 OCF_RA_PROVIDER = ENV['OCF_RA_PROVIDER'] || cfg['ocf_ra_provider']
 OCF_RA_PATH = ENV['OCF_RA_PATH'] || cfg['ocf_ra_path']
 UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg ['upload_method']
+GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
+MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
 if USE_JEPSEN == "true"
@@ -43,11 +45,20 @@ def docker_exec (name, script)
 end
 
 # Render a pacemaker primitive configuration
+corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh")
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh")
 cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
    "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}"])
+galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
+  [GALERA_VER, MYSQL_WSREP_VER])
+galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
+wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
+trick = shell_script("/vagrant/vagrant_script/trick.sh")
+conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
+  "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1])
+conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_COUNT+1])
 
 # Setup lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
@@ -100,8 +111,7 @@ Vagrant.configure(2) do |config|
   end
 
   # Prepare docker volumes for nested containers
-  docker_volumes = [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
-    "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
+  docker_volumes = []
   if DOCKER_MOUNTS != 'none'
     if DOCKER_MOUNTS.kind_of?(Array)
       mounts = DOCKER_MOUNTS
@@ -117,6 +127,8 @@ Vagrant.configure(2) do |config|
   # A Jepsen only case, set up a contol node
   if USE_JEPSEN == "true"
     config.vm.define "n0", primary: true do |config|
+      docker_volumes << [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
+        "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
       config.vm.host_name = "n0"
       config.vm.provider :docker do |d, override|
         d.name = "n0"
@@ -138,23 +150,28 @@ Vagrant.configure(2) do |config|
   end
 
   # Any conf tasks to be executed for all nodes should be added here as well
-  COMMON_TASKS = [ra_ocf_setup, cib_cleanup]
+  COMMON_TASKS = [corosync_setup, galera_install, ra_ocf_setup, galera_conf_setup, wsrep_init_setup,
+    primitive_setup, trick, cib_cleanup]
 
   config.vm.define "n1", primary: true do |config|
     config.vm.host_name = "n1"
-    corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh", [], ["#{IP24NET}.2"])
     config.vm.provider :docker do |d, override|
       d.name = "n1"
-      d.create_args = [ "--stop-signal=SIGKILL", "-i", "-t", "--privileged", "--ip=#{IP24NET}.2",
-      "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
+      d.create_args = [ "--stop-signal=SIGKILL", "--shm-size=500m", "-i", "-t",
+        "--ip=#{IP24NET}.2", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
     end
     config.trigger.after :up, :option => { :vm => 'n1' } do
+      docker_exec("n1","/usr/sbin/sshd")
+      docker_exec("n1","/usr/sbin/rsyslogd")
       if USE_JEPSEN == "true"
+        docker_exec("n1","/usr/sbin/sshd")
         docker_exec("n1","#{ssh_setup} >/dev/null 2>&1")
         docker_exec("n1","#{ssh_allow} >/dev/null 2>&1")
       end
-      [corosync_setup, primitive_setup].each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
+      # Setup as the main cluster node the rest will join to
+      docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
+      docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
       # If required, inject a sync point/test here, like waiting for a cluster to become ready
       # docker_exec("n1","#{foo_test_local}") unless USE_JEPSEN == "true"
     end
@@ -166,20 +183,20 @@ Vagrant.configure(2) do |config|
     raise if ip_ind > 254
     config.vm.define "n#{index}" do |config|
       config.vm.host_name = "n#{index}"
-      # wait 2 seconds for the first corosync node
-      corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh", [], ["#{IP24NET}.#{ip_ind}", 2])
       config.vm.provider :docker do |d, override|
         d.name = "n#{index}"
-        d.create_args = ["--stop-signal=SIGKILL", "-i", "-t", "--privileged", "--ip=#{IP24NET}.#{ip_ind}",
-        "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
+        d.create_args = ["--stop-signal=SIGKILL", "--shm-size=500m", "-i", "-t",
+          "--ip=#{IP24NET}.#{ip_ind}", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
       end
       config.trigger.after :up, :option => { :vm => "n#{index}" } do
+        docker_exec("n#{index}","/usr/sbin/sshd")
+        docker_exec("n#{index}","/usr/sbin/rsyslogd")
         if USE_JEPSEN == "true"
           docker_exec("n#{index}","#{ssh_setup} >/dev/null 2>&1")
           docker_exec("n#{index}","#{ssh_allow} >/dev/null 2>&1")
         end
-        docker_exec("n#{index}","#{corosync_setup}")
         COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} >/dev/null 2>&1") }
+        docker_exec("n#{index}","#{conf_rest} >/dev/null 2>&1")
       end
     end
   end

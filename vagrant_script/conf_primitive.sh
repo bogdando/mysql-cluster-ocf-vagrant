@@ -19,6 +19,7 @@ done
 # remove old node's names artifact
 # w/a https://github.com/ClusterLabs/crmsh/issues/120
 # retry for the cib patch diff Error 203
+crm configure show p_mysql && exit 0
 count=0
 while [ $count -lt 160 ]
 do
@@ -27,13 +28,11 @@ do
   property no-quorum-policy=stop
   commit
 EOF
- Example:
   (echo y | crm configure primitive p_mysql ocf:mysql:mysql \
-        params config="/etc/mysql/my.cnf" test_passwd=clustercheck test_user=clustercheck pid_file="/var/run/mysql/pid" \
+        params config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
         op monitor interval=60 timeout=55 \
         op start interval=0 timeout=300 \
-        op stop interval=0 timeout=120
-          meta migration-threshold=10 failure-timeout=30s resource-stickiness=100) && \
+        op stop interval=0 timeout=120) && \
   (echo y | crm configure clone p_mysql-clone p_mysql)
   [ $? -eq 0 ] && break
   count=$((count+10))
