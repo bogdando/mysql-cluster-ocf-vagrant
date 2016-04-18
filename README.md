@@ -12,7 +12,7 @@ This uses a Galera packages and a custom
 ## Vagrantfile
 
 Supports only docker (experimental) provider.
-Required vagrant plugins: vagrant-triggers.
+Requires Docker >=v1.10 and vagrant-triggers plugin for a Vagrant.
 TODO(bogdando): add support for debian/centos/rhel images as well.
 
 * Spins up two VM nodes ``[n1, n2, n3]`` with predefined IP addressess
@@ -20,7 +20,8 @@ TODO(bogdando): add support for debian/centos/rhel images as well.
   more nodes to form a cluster. Note, that the ``vagrant destroy`` shall accept
   the same number as well!
 * Creates a corosync cluster with disabled quorum and STONITH.
-* Launches the given OCF RA under test, which created a galera cluster.
+* Installs MySQL and either Codership, or Percona Galera or MariaDB packages.
+* Launches the given MySQL OCF RA under test, which creates the DB cluster.
 
 Note, that constants from the ``Vagrantfile`` may be as well configred as
 ``vagrant-settings.yaml_defaults`` or ``vagrant-settings.yaml`` and will be
@@ -29,6 +30,11 @@ overriden by environment variables, if specified.
 Also note, that for workarounds implemented for the docker provider made
 the command ``vagrant ssh`` not working. Instead use the
 ``docker exec -it n1 bash`` or suchlike.
+
+The script `./vagrant_script/mysql_install.sh` installs Codership packages.
+The `./vagrant_script/mysql_install2.sh` installs Percona packages. And
+`./vagrant_script/mysql_install3.sh` installs MariaDB packages. To switch
+across those, update the Vagrantfile's `galera_install` value as required.
 
 ## Known issues
 
