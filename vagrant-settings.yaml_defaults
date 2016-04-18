@@ -14,7 +14,7 @@ docker_mounts:
   - jepsen:/jepsen
   - /tmp/sshkey:/root/.ssh/id_rsa:ro
 # which app to test with jepsen, e.g. galera, rabbitmq, jepsen, meowdb
-jepsen_app: mysql_ocf_pcmk
+jepsen_app: percona_ocf_pcmk
 # Which provider for the OCF RA under test to use
 ocf_ra_provider: mysql
 # How to upload the OCF RA : none/copy from/wget from a given path
