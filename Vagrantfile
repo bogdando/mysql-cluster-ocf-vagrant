@@ -21,6 +21,7 @@ DOCKER_MOUNTS = ENV['DOCKER_MOUNTS'] || cfg['docker_mounts']
 OCF_RA_PROVIDER = ENV['OCF_RA_PROVIDER'] || cfg['ocf_ra_provider']
 OCF_RA_PATH = ENV['OCF_RA_PATH'] || cfg['ocf_ra_path']
 UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg ['upload_method']
+SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg ['smoketest_wait']
 GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
 MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
@@ -126,6 +127,8 @@ Vagrant.configure(2) do |config|
 
   # A Jepsen only case, set up a contol node
   if USE_JEPSEN == "true"
+    db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
+      ["WAIT=#{SMOKETEST_WAIT}, "AT_NODE=n1"], SLAVES_COUNT+1)
     config.vm.define "n0", primary: true do |config|
       docker_volumes << [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
         "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
@@ -140,11 +143,12 @@ Vagrant.configure(2) do |config|
         docker_exec("n0","#{hosts_setup} >/dev/null 2>&1")
         docker_exec("n0","#{ssh_setup} >/dev/null 2>&1")
         docker_exec("n0","#{ssh_allow} >/dev/null 2>&1")
-        # If required, inject a sync point/test here, like waiting for a cluster to become ready
-        # docker_exec("n0","#{foo_test_via_ssh_n1}")
+        # Wait and run a smoke test against a cluster, shall not fail
+        docker_exec("n0","#{db_test}") or raise "Smoke test: FAILED to assemble a cluster"
         # Then run all of the jepsen tests for the given app, and it *may* fail
         docker_exec("n0","#{lein_test}")
         # Verify if the cluster was recovered
+        docker_exec("n0","#{db_test}")
       end
     end
   end
@@ -154,6 +158,8 @@ Vagrant.configure(2) do |config|
     primitive_setup, trick, cib_cleanup]
 
   config.vm.define "n1", primary: true do |config|
+    db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
+      ["WAIT=#{SMOKETEST_WAIT}"], SLAVES_COUNT+1)
     config.vm.host_name = "n1"
     config.vm.provider :docker do |d, override|
       d.name = "n1"
@@ -172,8 +178,8 @@ Vagrant.configure(2) do |config|
       # Setup as the main cluster node the rest will join to
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
       docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
-      # If required, inject a sync point/test here, like waiting for a cluster to become ready
-      # docker_exec("n1","#{foo_test_local}") unless USE_JEPSEN == "true"
+      # Wait and run a smoke test against a cluster, shall not fail
+      docker_exec("n1","#{db_test}") unless USE_JEPSEN == "true"
     end
   end
 
