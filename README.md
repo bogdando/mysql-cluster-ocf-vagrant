@@ -129,11 +129,11 @@ docker run -it --rm -e "GZIP=-9" --entrypoint /bin/tar -v jepsen:/results:ro -v
 ```
 
 To run lein commmands, use ``docker exec -it jepsen lein foo`` from the control node.
-For example, for the `jepsen_app: jepsen`, it may be:
+For example, to test a multi master writes/reads mode, it may be:
 ```
-docker exec -it jepsen lein test :only jepsen.core-test/ssh-test
+lein test :only jepsen.percona_ocf_pcmk-test/bank-test-multi
 ```
-or just ``lein test``, or even something like
+or just ``lein test`` to run all of the test cases, or even something like
 ```
-bash -xx /vagrant/vagrant_script/lein_test.sh mysql_ocf_pcmk
+bash -xx /vagrant/vagrant_script/lein_test.sh mysql_ocf_pcmk bank-test-single
 ```

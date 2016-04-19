@@ -1,8 +1,8 @@
 #!/bin/sh
 # Pull images to new location, which is the shared docker volume /jepsen
-# Launch lein to test a given app ($1)
+# Launch lein to test a given app ($1) and a given test ($2) or all.
 # Protect from an incident running on hosts which aren't n1, n2, etc.
-# Stop/remove the main jepsen container, if $2 = purge
+# Stop & remove the main jepsen container, if env $PURGE=true
 hostname | grep -q "^n[0-9]\+"
 [ $? -eq 0 ] || exit 1
 [ "$1" ] || exit 1
@@ -19,7 +19,7 @@ then
   docker pull pandeiro/lein
 fi
 
-if [ "${2}" = "purge" ]; then
+if [ "${PURGE}" = "true" ]; then
   docker stop jepsen && docker rm -f -v jepsen
 fi
 
@@ -57,7 +57,7 @@ docker run --stop-signal=SIGKILL -itd \
   --entrypoint /bin/bash \
   --name jepsen -h jepsen \
   pandeiro/lein:latest
-if [ "${2}" = "purge" ]; then
+if [ "${PURGE}" = "true" ]; then
   # install dependency
   docker exec -it jepsen bash -c "apt-get update"
   docker exec -it jepsen bash -c "apt-get -y install gnuplot-qt"
@@ -67,7 +67,10 @@ docker exec -it jepsen bash -c "mkdir -p resources/jepsen/galera/0.1.0-SNAPSHOT"
 docker exec -it jepsen bash -c "cp -f /custom2/jepsen.galera-0.1.0-SNAPSHOT*  resources/jepsen/galera/0.1.0-SNAPSHOT/"
 docker exec -it jepsen bash -c "mkdir -p resources/jepsen/jepsen/0.1.0-SNAPSHOT"
 docker exec -it jepsen bash -c "cp -f /custom/jepsen-0.1.0-SNAPSHOT*  resources/jepsen/jepsen/0.1.0-SNAPSHOT/"
-docker exec -it jepsen bash -c "lein deps && lein compile && lein test"
+
+testcase="lein test"
+[ "${2}" ] && testcase="${testcase} :only jepsen.${1}-test/${2}"
+docker exec -it jepsen bash -c "lein deps && lein compile && ${testcase}"
 echo "Test exited with $?, but it is OK anyway"
 sync
 exit 0

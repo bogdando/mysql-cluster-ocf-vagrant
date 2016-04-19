@@ -26,6 +26,7 @@ GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
 MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
+JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] || cfg ['jepsen_testcase']
 if USE_JEPSEN == "true"
   SLAVES_COUNT = 4
 else
@@ -63,7 +64,8 @@ conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_
 
 # Setup lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
-lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", [], [JEPSEN_APP])
+lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", [],
+  [JEPSEN_APP, JEPSEN_TESTCASE])
 ssh_setup = shell_script("/vagrant/vagrant_script/conf_ssh.sh")
 entries = "'#{IP24NET}.2 n1'"
 cmd = ["ssh-keyscan -t rsa n1,#{IP24NET}.2 >> ~/.ssh/known_hosts"]
@@ -128,7 +130,7 @@ Vagrant.configure(2) do |config|
   # A Jepsen only case, set up a contol node
   if USE_JEPSEN == "true"
     db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-      ["WAIT=#{SMOKETEST_WAIT}, "AT_NODE=n1"], SLAVES_COUNT+1)
+      ["WAIT=#{SMOKETEST_WAIT}", "AT_NODE=n1"], [SLAVES_COUNT+1])
     config.vm.define "n0", primary: true do |config|
       docker_volumes << [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
         "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
@@ -159,7 +161,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "n1", primary: true do |config|
     db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-      ["WAIT=#{SMOKETEST_WAIT}"], SLAVES_COUNT+1)
+      ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1])
     config.vm.host_name = "n1"
     config.vm.provider :docker do |d, override|
       d.name = "n1"
