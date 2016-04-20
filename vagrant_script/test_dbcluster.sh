@@ -1,11 +1,8 @@
 #!/bin/bash
 # Smoke test for a DB cluster of given # of nodes as $1,
 # wait for a given $WAIT env var
-# run on remote node, if the $AT_NODE specified.
-# When run localy, provide crm_mon outputs as well.
-cmd="timeout --signal=KILL 10 mysql -uroot -proot -e \"show global status like 'wsrep%'\""
-[ "${AT_NODE}" ] && cmd="ssh ${AT_NODE} ${cmd}"
-
+# run on remote node $2.
+cmd="ssh $2 timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
 count=0
 result="FAILED"
 throw=1
@@ -34,10 +31,6 @@ do
   fi
   echo "DB cluster is yet to be ready"
   count=$((count+10))
-  if [ -z "${AT_NODE}" ]; then
-    echo "Crm_mon says:"
-    timeout --signal=KILL 5 crm_mon -fotAW -1
-  fi
   sleep 30
 done
 
