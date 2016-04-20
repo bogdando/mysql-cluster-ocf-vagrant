@@ -135,5 +135,8 @@ lein test :only jepsen.percona_ocf_pcmk-test/bank-test-multi
 ```
 or just ``lein test`` to run all of the test cases, or even something like
 ```
-bash -xx /vagrant/vagrant_script/lein_test.sh mysql_ocf_pcmk bank-test-single
+PURGE=true bash -xx /vagrant/vagrant_script/lein_test.sh mysql_ocf_pcmk bank-test-single
 ```
+Note, that `PURGE` will stop & remove the jepsen container, if running. You may
+want to do this, if things become strange. Although be prepared for a long
+container start up as it'd install the gnuplot (required by Jepsen) with many dependencies.

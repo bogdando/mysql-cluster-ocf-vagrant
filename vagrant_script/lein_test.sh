@@ -26,7 +26,7 @@ fi
 # Run lein to make a custom galera dependency build
 docker stop jepsen-build && docker rm -f -v jepsen-build
 echo "Make a custom galera jar build"
-docker run -itd --rm \
+docker run -it --rm \
   -v /jepsen/jepsen/galera:/app \
   --entrypoint /bin/bash \
   --name jepsen-build -h jepsen \
