@@ -30,8 +30,8 @@ do
 EOF
   (echo y | crm configure primitive p_mysql ocf:mysql:mysql \
         params config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
-        op monitor interval=60 timeout=300 \
-        op start interval=0 timeout=300 \
+        op monitor interval=60 timeout=90 \
+        op start interval=0 timeout=60 \
         op stop interval=0 timeout=120) && \
   (echo y | crm configure clone p_mysql-clone p_mysql)
   [ $? -eq 0 ] && break
