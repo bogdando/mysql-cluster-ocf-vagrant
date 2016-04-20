@@ -157,7 +157,7 @@ Vagrant.configure(2) do |config|
 
   # Any conf tasks to be executed for all nodes should be added here as well
   COMMON_TASKS = [corosync_setup, galera_install, ra_ocf_setup, galera_conf_setup, wsrep_init_setup,
-    primitive_setup, trick, cib_cleanup]
+    primitive_setup, cib_cleanup]
 
   config.vm.define "n1", primary: true do |config|
     db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
@@ -179,6 +179,7 @@ Vagrant.configure(2) do |config|
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
       # Setup as the main cluster node the rest will join to
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
+      docker_exec("n1","#{trick} >/dev/null 2>&1")
       docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
       docker_exec("n1","#{db_test}") unless USE_JEPSEN == "true"
