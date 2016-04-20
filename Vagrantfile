@@ -64,7 +64,7 @@ conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_
 
 # Setup lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
-lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", [],
+lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", ["PURGE=true"],
   [JEPSEN_APP, JEPSEN_TESTCASE])
 ssh_setup = shell_script("/vagrant/vagrant_script/conf_ssh.sh")
 entries = "'#{IP24NET}.2 n1'"
