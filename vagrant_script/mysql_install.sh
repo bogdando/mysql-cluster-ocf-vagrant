@@ -22,5 +22,6 @@ file2="mysql-server-wsrep-$2-amd64.deb"
 wget "https://launchpad.net/codership-mysql/$v1/$2/+download/$file2" -O "/tmp/$file2"
 dpkg --force-all -i "/tmp/$file1" "/tmp/$file2"
 
+mysql_install_db --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
 service mysql stop
 exit $?
