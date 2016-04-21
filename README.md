@@ -56,8 +56,10 @@ across those, update the Vagrantfile's `galera_install` value as required.
   ``packer-atlas-example0`` or ``vagrant-libvirt`` or the like. Otherwise nodes may
   become isolated from the host system.
 
-* For Ubuntu host OS, does not work with privileged containers due to [apparmor
-  issues](https://github.com/docker/docker/issues/5490).
+* For Ubuntu host OS, mysql does not work with privileged containers due to [apparmor
+  issues](https://github.com/docker/docker/issues/5490). And w/o priv mode, there
+  are strange things may happen to the VM like containers running /sbin/init as
+  the entrypoint, so take care (and re-try vagrant down/up).
 
 ## Troubleshooting
 
