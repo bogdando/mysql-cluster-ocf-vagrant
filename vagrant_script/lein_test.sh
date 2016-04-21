@@ -19,6 +19,8 @@ then
   docker pull pandeiro/lein
 fi
 
+# Try to start the jepsen container w/o purging it
+docker start jepsen || PURGE=true
 if [ "${PURGE}" = "true" ]; then
   docker stop jepsen && docker rm -f -v jepsen
 fi
