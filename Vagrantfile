@@ -53,7 +53,7 @@ cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
    "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}"])
-galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
+galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh", [],
   [GALERA_VER, MYSQL_WSREP_VER])
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
