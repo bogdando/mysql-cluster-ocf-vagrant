@@ -64,10 +64,12 @@ if [ "${PURGE}" = "true" ]; then
     docker exec -it jepsen bash -c "apt-get update"
     docker exec -it jepsen bash -c "apt-get -y install gnuplot-qt"
   # copy custom jar builds
-  docker exec -it jepsen bash -c "mkdir -p resources/jepsen/galera/0.1.0-SNAPSHOT"
-  docker exec -it jepsen bash -c "cp -f /custom2/jepsen.galera-0.1.0-SNAPSHOT*  resources/jepsen/galera/0.1.0-SNAPSHOT/"
-  docker exec -it jepsen bash -c "mkdir -p resources/jepsen/jepsen/0.1.0-SNAPSHOT"
-  docker exec -it jepsen bash -c "cp -f /custom/jepsen-0.1.0-SNAPSHOT*  resources/jepsen/jepsen/0.1.0-SNAPSHOT/"
+  dir_galera=resources/jepsen/galera/jepsen.galera/0.1.0-SNAPSHOT
+  dir_jepsen=resources/jepsen/jepsen/0.1.0-SNAPSHOT/
+  docker exec -it jepsen bash -c "mkdir -p $dir_galera"
+  docker exec -it jepsen bash -c "cp -f /custom2/jepsen.galera-0.1.0-SNAPSHOT*  $dir_galera"
+  docker exec -it jepsen bash -c "mkdir -p $dir_jepsen"
+  docker exec -it jepsen bash -c "cp -f /custom/jepsen-0.1.0-SNAPSHOT*  $dir_jepsen"
 fi
 
 testcase="lein test"
