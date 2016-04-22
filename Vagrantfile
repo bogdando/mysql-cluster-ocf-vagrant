@@ -57,7 +57,6 @@ galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh", [],
   [GALERA_VER, MYSQL_WSREP_VER])
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
-trick = shell_script("/vagrant/vagrant_script/trick.sh")
 conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
   "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1])
 conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_COUNT+1])
@@ -172,14 +171,12 @@ Vagrant.configure(2) do |config|
       docker_exec("n1","/usr/sbin/sshd")
       docker_exec("n1","/usr/sbin/rsyslogd")
       if USE_JEPSEN == "true"
-        docker_exec("n1","/usr/sbin/sshd")
         docker_exec("n1","#{ssh_setup} >/dev/null 2>&1")
         docker_exec("n1","#{ssh_allow} >/dev/null 2>&1")
       end
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
       # Setup as the main cluster node the rest will join to
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
-      docker_exec("n1","#{trick} >/dev/null 2>&1")
       docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
       docker_exec("n1","#{db_test}") unless USE_JEPSEN == "true"

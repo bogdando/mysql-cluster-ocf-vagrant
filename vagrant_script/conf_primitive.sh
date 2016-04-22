@@ -40,4 +40,5 @@ EOF
   count=$((count+10))
   sleep 10
 done
+(echo n | crm configure location foo p_mysql-clone inf: n1)
 exit 0
