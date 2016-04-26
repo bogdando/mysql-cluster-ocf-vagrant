@@ -23,6 +23,7 @@ OCF_RA_PATH = ENV['OCF_RA_PATH'] || cfg['ocf_ra_path']
 UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg ['upload_method']
 SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg ['smoketest_wait']
 GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
+GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg ['galera_distro']
 MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
@@ -53,8 +54,20 @@ cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
    "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}"])
-galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh", [],
+
+case GALERA_DISTRO
+when "percona"
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh", [],
+  [GALERA_VER])
+when "codership"
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
   [GALERA_VER, MYSQL_WSREP_VER])
+when "mariadb"
+  raise "TBD"
+else
+  raise "Distro #{GALERA_DISTRO} is not supported"
+end
+    
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
 conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [

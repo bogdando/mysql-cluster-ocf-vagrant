@@ -34,7 +34,41 @@ the command ``vagrant ssh`` not working. Instead use the
 The script `./vagrant_script/mysql_install.sh` installs Codership packages.
 The `./vagrant_script/mysql_install2.sh` installs Percona packages. And
 `./vagrant_script/mysql_install3.sh` installs MariaDB packages. To switch
-across those, update the Vagrantfile's `galera_install` value as required.
+across those, update the Vagrant settings file, for example:
+
+* To install a MariaDB Galera put the `galera_distro: mariadb` and (WIP/TBD).
+* To install a Codership Galera, put the `galera_distro: codership` and
+  `galera_ver: 25.3.5`, and `mysql_wsrep_ver: 5.6.16-25.5`.
+* To install a Percona v5.6 from Jessie mirrors, put the `galera_distro: percona`
+  and leave `galera_ver` and `mysql_wsrep_ver` empty. Or (WIP/TBD) to install a custom
+  build, use for example
+  `galera_ver: /jepsen/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar`,
+  then prepare the shared volume jepsen:
+  ```
+  docker run -itd --entrypoint /bin/bash --name prep \
+  -v jepsen:/mount bogdando/pacemaker-cluster-ocf-wily
+
+  docker exec -it prep wget \
+  https://www.percona.com/downloads/Percona-Server-5.6/Percona-Server-5.6.29-76.2/binary/debian/wily/x86_64/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar \
+  -O /mount/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar
+
+  docker exec -it prep sync
+  sync; docker stop prep && docker rm prep
+  ```
+* To install Percona v5.7 (WIP/TBD), put the `galera_distro: percona` and
+  `galera_ver: /jepsen/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar`,
+  then prepare the shared volume jepsen:
+  ```
+  docker run -itd --entrypoint /bin/bash --name prep \
+  -v jepsen:/mount bogdando/pacemaker-cluster-ocf-wily
+
+  docker exec -it prep wget \
+  https://www.percona.com/downloads/Percona-Server-5.7/Percona-Server-5.7.11-4/binary/debian/wily/x86_64/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar \
+  -O /mount/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar
+
+  docker exec -it prep sync
+  sync; docker stop prep && docker rm prep
+  ```
 
 ## Known issues
 
