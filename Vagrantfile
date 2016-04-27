@@ -67,15 +67,16 @@ when "mariadb"
 else
   raise "Distro #{GALERA_DISTRO} is not supported"
 end
-    
+
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
 conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
   "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1])
 conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_COUNT+1])
 
-# Setup lein, jepsen and hosts/ssh access for it
+# Setup docker dropins, lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
+docker_dropins = shell_script("/vagrant/vagrant_script/conf_docker_dropins.sh")
 lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", ["PURGE=true"],
   [JEPSEN_APP, JEPSEN_TESTCASE])
 ssh_setup = shell_script("/vagrant/vagrant_script/conf_ssh.sh",[], [SLAVES_COUNT+1])
@@ -156,6 +157,7 @@ Vagrant.configure(2) do |config|
         # Wait and run a smoke test against a cluster, shall not fail
         docker_exec("n0","#{db_test}") or raise "Smoke test: FAILED to assemble a cluster"
         # Then run all of the jepsen tests for the given app, and it *may* fail
+        docker_exec("n0","#{docker_dropins}")
         docker_exec("n0","#{lein_test}")
         # Verify if the cluster was recovered
         docker_exec("n0","#{db_test}")
