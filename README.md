@@ -95,6 +95,11 @@ across those, update the Vagrant settings file, for example:
   are strange things may happen to the VM like containers running /sbin/init as
   the entrypoint, so take care (and re-try vagrant down/up).
 
+* A jepsen test may hang like if is waiting for something and leave blocking iptables
+  rules after Nemesis undone. Just kill the test and remove the rules, for
+  example ``for i in 1 2 3 4 5; do docker exec -it n$i bash -c "iptables -F -w ;
+  iptables -X -w"; done``
+
 ## Troubleshooting
 
 You may want to use the command like:
