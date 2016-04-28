@@ -115,11 +115,12 @@ For the MySQL OCF RA you may use the command like:
 `(OCF_RESKEY_additional_parameters="--wsrep-new-cluster")` OCF_RESOURCE_INSTANCE=p_mysql \
 OCF_ROOT=/usr/lib/ocf OCF_RESKEY_test_passwd=root OCF_RESKEY_test_user=root \
 OCF_RESKEY_pid=/var/run/mysqld/mysqld.pid OCF_RESKEY_socket=/var/run/mysqld/mysqld.sock \
-/usr/lib/ocf/resource.d/mysql/mysql monitor
+OCF_RESKEY_debug=true /usr/lib/ocf/resource.d/mysql/mysql monitor
 ```
 
 The optional part in the brackets will tell the RA to bootsrap a new cluster instead
-of trying to join the existing one.
+of trying to join the existing one. Debug (bash -xx) logs may be found in
+`/tmp/mysql.ocf.ra.debug/log`.
 
 It puts its logs under ``/var/log/syslog`` from the `ocf-mysql-wss` program tag.
 

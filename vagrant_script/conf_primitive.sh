@@ -29,7 +29,7 @@ do
   commit
 EOF
   (echo y | crm configure primitive p_mysql ocf:mysql:mysql \
-        params config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
+        params debug="true" config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
         pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
         op monitor interval=60 timeout=90 \
         op start interval=0 timeout=60 \
@@ -41,4 +41,11 @@ EOF
   sleep 10
 done
 (echo n | crm configure location foo p_mysql-clone inf: n1)
+
+# Prepare for debug logs
+dir=/tmp/mysql.ocf.ra.debug
+mkdir -p $dir
+touch ${dir}/log
+chmod 700 ${dir}/log
+
 exit 0
