@@ -68,7 +68,7 @@ else
   raise "Distro #{GALERA_DISTRO} is not supported"
 end
 
-galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
+galera_conf_setup = shell_script("cp /vagrant/conf/*.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
 conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
   "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1])

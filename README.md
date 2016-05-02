@@ -116,6 +116,7 @@ For the MySQL OCF RA you may use the command like:
 `(OCF_RESKEY_additional_parameters="--wsrep-new-cluster")` OCF_RESOURCE_INSTANCE=p_mysql \
 OCF_ROOT=/usr/lib/ocf OCF_RESKEY_test_passwd=root OCF_RESKEY_test_user=root \
 OCF_RESKEY_pid=/var/run/mysqld/mysqld.pid OCF_RESKEY_socket=/var/run/mysqld/mysqld.sock \
+OCF_RESKEY_config_wsrecover=/etc/mysql/wsrecover.cnf \
 OCF_RESKEY_debug=true /usr/lib/ocf/resource.d/mysql/mysql monitor
 ```
 
