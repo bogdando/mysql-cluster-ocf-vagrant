@@ -36,12 +36,13 @@ The `./vagrant_script/mysql_install2.sh` installs Percona packages. And
 `./vagrant_script/mysql_install3.sh` installs MariaDB packages. To switch
 across those, update the Vagrant settings file, for example:
 
-* To install a MariaDB Galera put the `galera_distro: mariadb` and (WIP/TBD).
+* To install a MariaDB Galera v10 (from a Debian Jessie mirror) put the
+  `galera_distro: mariadb`.
 * To install a Codership Galera, put the `galera_distro: codership` and
   `galera_ver: 25.3.5`, and `mysql_wsrep_ver: 5.6.16-25.5`.
 * To install a Percona v5.6 from Jessie mirrors, put the `galera_distro: percona`
-  and leave `galera_ver` and `mysql_wsrep_ver` empty. Or (WIP/TBD) to install a custom
-  build, use for example
+  and leave `galera_ver` and `mysql_wsrep_ver` empty.
+* (TODO) Or to install a custom build, use for example
   `galera_ver: /jepsen/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar`,
   then prepare the shared volume jepsen:
   ```
@@ -55,7 +56,7 @@ across those, update the Vagrant settings file, for example:
   docker exec -it prep sync
   sync; docker stop prep && docker rm prep
   ```
-* To install Percona v5.7 (WIP/TBD), put the `galera_distro: percona` and
+* (TODO) To install Percona v5.7, put the `galera_distro: percona` and
   `galera_ver: /jepsen/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar`,
   then prepare the shared volume jepsen:
   ```

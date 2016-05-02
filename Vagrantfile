@@ -63,7 +63,7 @@ when "codership"
   galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
   [GALERA_VER, MYSQL_WSREP_VER])
 when "mariadb"
-  raise "TBD"
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install3.sh")
 else
   raise "Distro #{GALERA_DISTRO} is not supported"
 end
