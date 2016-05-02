@@ -28,14 +28,14 @@ do
   property no-quorum-policy=stop
   commit
 EOF
-  (echo y | crm configure primitive p_mysql ocf:mysql:mysql \
+  crm --force configure primitive p_mysql ocf:mysql:mysql \
         params debug="true" config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
         pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
         op monitor interval=60 timeout=90 \
         op start interval=0 timeout=60 \
         op stop interval=0 timeout=120 \
-        meta migration-threshold=10 failure-timeout=30s resource-stickiness=100) && \
-  (echo y | crm configure clone p_mysql-clone p_mysql)
+        meta migration-threshold=10 failure-timeout=30s resource-stickiness=100 && \
+  crm --force configure clone p_mysql-clone p_mysql
   [ $? -eq 0 ] && break
   count=$((count+10))
   sleep 10
