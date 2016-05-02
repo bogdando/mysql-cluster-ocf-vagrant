@@ -41,11 +41,4 @@ EOF
   sleep 10
 done
 (echo n | crm configure location foo p_mysql-clone inf: n1)
-
-# Prepare for debug logs
-dir=/tmp/mysql.ocf.ra.debug
-mkdir -p $dir
-touch ${dir}/log
-chmod 700 ${dir}/log
-
 exit 0
