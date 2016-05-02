@@ -14,6 +14,12 @@ echo "mariadb-galera-server-10.0 mysql-server/root_password_again password root"
 apt-get update
 apt-get -y install socat mariadb-galera-server percona-xtrabackup galera-3 netcat-openbsd
 
+# w/a https://jira.mariadb.org/browse/MDEV-9708 and "xbstream: Can't create/write to file '././backup-my.cnf' (Errcode: 17 - File exists)"
+wget https://github.com/percona/percona-xtradb-cluster/raw/5.6/scripts/wsrep_sst_xtrabackup-v2.sh -O /usr/bin/wsrep_sst_xtrabackup-v2
+wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.3.4/binary/debian/wily/x86_64/percona-xtrabackup_2.3.4-1.wily_amd64.deb \
+-O /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
+dpkg -i --force-all /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
+
 mysql_install_db --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
 service mysql stop
 exit $?
