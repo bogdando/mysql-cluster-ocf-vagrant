@@ -169,9 +169,10 @@ Vagrant.configure(2) do |config|
   COMMON_TASKS = [corosync_setup, galera_install, ra_ocf_setup, galera_conf_setup, wsrep_init_setup,
     primitive_setup, cib_cleanup]
 
+  db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
+    ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1])
+
   config.vm.define "n1", primary: true do |config|
-    db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-      ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1, "n2"])
     config.vm.host_name = "n1"
     config.vm.provider :docker do |d, override|
       d.name = "n1"
@@ -187,7 +188,7 @@ Vagrant.configure(2) do |config|
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
       docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
-      docker_exec("n1","#{db_test}") unless USE_JEPSEN == "true"
+      docker_exec("n1","#{db_test}")
     end
   end
 
@@ -208,6 +209,8 @@ Vagrant.configure(2) do |config|
         docker_exec("n#{index}","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
         COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} >/dev/null 2>&1") }
         docker_exec("n#{index}","#{conf_rest} >/dev/null 2>&1")
+        # Wait and run a smoke test against a cluster, shall not fail
+        docker_exec("n#{index}","#{db_test}") unless USE_JEPSEN == "true"
       end
     end
   end

@@ -1,8 +1,9 @@
 #!/bin/bash
 # Smoke test for a DB cluster of given # of nodes as $1,
 # wait for a given $WAIT env var
-# run on remote node $2.
-cmd="ssh $2 timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
+# run on remote node $2, if given or on itself.
+at_node="${2:-$HOSTNAME}"
+cmd="ssh ${at_node} timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
 count=0
 result="FAILED"
 throw=1
@@ -19,9 +20,9 @@ do
   [ $? -eq 0 ] || state=1
   echo "${output}" | grep -q "wsrep_cluster_status.*Primary"
   [ $? -eq 0 ] || state=1
-  echo "${output}" | grep -q "wsrep_connected.*ON"                                                                                                                              
+  echo "${output}" | grep -q "wsrep_connected.*ON"
   [ $? -eq 0 ] || state=1
-  echo "${output}" | grep -q "wsrep_ready.*ON"                                                                                                                              
+  echo "${output}" | grep -q "wsrep_ready.*ON"
   [ $? -eq 0 ] || state=1
 
   if [ $rc -eq 0 -a $state -eq 0 ]; then

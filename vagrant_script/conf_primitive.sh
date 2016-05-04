@@ -16,10 +16,8 @@ do
 done
 
 # create the required pacemaker primitive for OCF RA under test,
-# remove old node's names artifact
 # w/a https://github.com/ClusterLabs/crmsh/issues/120
 # retry for the cib patch diff Error 203
-crm configure show p_mysql && exit 0
 count=0
 while [ $count -lt 160 ]
 do
@@ -40,5 +38,6 @@ EOF
   count=$((count+10))
   sleep 10
 done
-(echo n | crm configure location foo p_mysql-clone inf: n1)
+
+crm configure location mysql_$HOSTNAME p_mysql-clone 100: $HOSTNAME
 exit 0
