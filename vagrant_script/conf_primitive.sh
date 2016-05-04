@@ -29,8 +29,7 @@ do
   commit
 EOF
   crm --force configure primitive p_mysql ocf:mysql:mysql \
-        params debug="true" config_wsrecover="/etc/mysql/wsrecover.cnf" \
-        config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
+        params debug="true" config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
         pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
         op monitor interval=60 timeout=90 \
         op start interval=0 timeout=60 \

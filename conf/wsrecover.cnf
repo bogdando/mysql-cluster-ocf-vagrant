@@ -1,5 +1,0 @@
-[mysqld]
-log_bin=binlog
-innodb-data-home-dir = /tmp
-innodb-log-group-home-dir=/tmp
-innodb-data-file-path=ibdata1:12M:autoextend
