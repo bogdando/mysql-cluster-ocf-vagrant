@@ -12,7 +12,7 @@ Pin-Priority: 1000" > /etc/apt/preferences.d/00mariadb.pref
 echo "mariadb-galera-server-10.0 mysql-server/root_password password root" | debconf-set-selections
 echo "mariadb-galera-server-10.0 mysql-server/root_password_again password root" | debconf-set-selections
 apt-get update
-apt-get -y install socat mariadb-galera-server percona-xtrabackup galera-3 netcat-openbsd
+apt-get -y install socat mariadb-galera-server percona-xtrabackup galera-3 netcat-openbsd libev4
 
 # w/a https://jira.mariadb.org/browse/MDEV-9708 and "xbstream: Can't create/write to file '././backup-my.cnf' (Errcode: 17 - File exists)"
 wget https://github.com/percona/percona-xtradb-cluster/raw/5.6/scripts/wsrep_sst_xtrabackup-v2.sh -O /usr/bin/wsrep_sst_xtrabackup-v2
