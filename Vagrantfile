@@ -186,7 +186,6 @@ Vagrant.configure(2) do |config|
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
       # Setup as the main cluster node the rest will join to
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
-      docker_exec("n1","crm resource cleanup p_mysql-clone >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
       docker_exec("n1","#{db_test}")
     end
