@@ -29,6 +29,7 @@ WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg ['wsrep_sst_method']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
 JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] || cfg ['jepsen_testcase']
+QUIET = ENV['QUIET'] || cfg ['quiet']
 if USE_JEPSEN == "true"
   SLAVES_COUNT = 4
 else
@@ -52,7 +53,6 @@ end
 corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh")
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
   ["SEED=n1"], [WSREP_SST_METHOD])
-cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
    "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}"])
@@ -90,6 +90,11 @@ SLAVES_COUNT.times do |i|
   entries += " '#{IP24NET}.#{ip_ind} n#{index}'"
 end
 hosts_setup = shell_script("/vagrant/vagrant_script/conf_hosts.sh", [], [entries])
+
+db_test_remote = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
+  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1, "n1"])
+db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
+  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1])
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
@@ -142,8 +147,6 @@ Vagrant.configure(2) do |config|
 
   # A Jepsen only case, set up a contol node
   if USE_JEPSEN == "true"
-    db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-      ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1, "n1"])
     config.vm.define "n0", primary: true do |config|
       docker_volumes << [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
         "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
@@ -158,22 +161,25 @@ Vagrant.configure(2) do |config|
         docker_exec("n0","#{hosts_setup} >/dev/null 2>&1")
         docker_exec("n0","#{ssh_setup} >/dev/null 2>&1")
         # Wait and run a smoke test against a cluster, shall not fail
-        docker_exec("n0","#{db_test}") or raise "Smoke test: FAILED to assemble a cluster"
+        docker_exec("n0","#{db_test_remote}") or raise "Smoke test: FAILED to assemble a cluster"
         # Then run all of the jepsen tests for the given app, and it *may* fail
         docker_exec("n0","#{docker_dropins}")
         docker_exec("n0","#{lein_test}")
         # Verify if the cluster was recovered
-        docker_exec("n0","#{db_test}")
+        docker_exec("n0","#{db_test_remote}")
       end
     end
   end
 
   # Any conf tasks to be executed for all nodes should be added here as well
   COMMON_TASKS = [corosync_setup, galera_install, ra_ocf_setup, galera_conf_setup, wsrep_init_setup,
-    primitive_setup, cib_cleanup]
+    primitive_setup]
 
-  db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-    ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1])
+  if QUIET == "true" then
+    redirect=">/dev/null 2>&1"
+  else
+    redirect=""
+  end
 
   config.vm.define "n1", primary: true do |config|
     config.vm.host_name = "n1"
@@ -186,7 +192,7 @@ Vagrant.configure(2) do |config|
       docker_exec("n1","/usr/sbin/sshd")
       docker_exec("n1","/usr/sbin/rsyslogd")
       docker_exec("n1","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
-      COMMON_TASKS.each { |s| docker_exec("n1","#{s} >/dev/null 2>&1") }
+      COMMON_TASKS.each { |s| docker_exec("n1","#{s} #{redirect}") }
       # Setup as the main cluster node the rest will join to
       docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
@@ -209,7 +215,7 @@ Vagrant.configure(2) do |config|
         docker_exec("n#{index}","/usr/sbin/sshd")
         docker_exec("n#{index}","/usr/sbin/rsyslogd")
         docker_exec("n#{index}","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
-        COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} >/dev/null 2>&1") }
+        COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} #{redirect}") }
         docker_exec("n#{index}","#{conf_rest} >/dev/null 2>&1")
         # Wait and run a smoke test against a cluster, shall not fail
         docker_exec("n#{index}","#{db_test}") unless USE_JEPSEN == "true"

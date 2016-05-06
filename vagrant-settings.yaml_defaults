@@ -23,12 +23,14 @@ ocf_ra_provider: mysql
 ocf_ra_path: https://raw.githubusercontent.com/openstack/fuel-library/master/files/fuel-ha-utils/ocf/mysql-wss
 upload_method: wget
 # which packages versions to use, or false
-galera_distro: codership
-galera_ver: 25.3.5
-mysql_wsrep_ver: 5.6.16-25.5
-wsrep_sst_method: mysqldump
+galera_distro: percona
+#galera_ver: 25.3.5
+#mysql_wsrep_ver: 5.6.16-25.5
+wsrep_sst_method: xtrabackup-v2
 # smoke test timeout, includes waiting for the OCF resource to start up
 # and form a cluster, if any
-smoketest_wait: 360
+smoketest_wait: 600
 # run jepsen tests or not
 use_jepsen: "false"
+# redirect tasks output to /dev/null or not
+quiet: "true"

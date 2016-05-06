@@ -6,10 +6,11 @@ hostname | grep -q "^n[0-9]\+"
 [ $? -eq 0 ] || exit 1
 
 #Install v5.6
+apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 1C4CBDCDCD2EFD2A
+echo 'deb http://repo.percona.com/apt jessie main' > /etc/apt/sources.list.d/percona.list
 echo "Package: *
-deb http://repo.percona.com/apt jessie main
-keys.gnupg.net
-1C4CBDCDCD2EFD2A" > /etc/apt/preferences.d/00percona.pref
+Pin: origin repo.percona.com
+Pin-Priority: 1000" > /etc/apt/preferences.d/00percona.pref
 
 apt-get update
 echo "percona-xtradb-cluster-56 mysql-server/root_password password root" | debconf-set-selections
@@ -17,8 +18,8 @@ echo "percona-xtradb-cluster-56 mysql-server/root_password_again password root" 
 echo "percona-xtradb-cluster-56 mysql-server-5.6/start_on_boot boolean false" | debconf-set-selections
 echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_password_again password root" | debconf-set-selections
 echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_password password root" | debconf-set-selections
-apt-get -y install percona-xtradb-cluster-server-5.6
-apt-get -y install socat libev4 libnuma1
+apt-get -y install percona-xtradb-cluster-server-5.6 socat libev4 libnuma1 libaio1
+apt-get -y install percona-galera-3 || apt-get -y install galera-3
 
 if [ "$1" ]; then
   #In place upgrade from a given tar for percona
