@@ -3,14 +3,19 @@
 # Based on https://github.com/kubernetes/kubernetes/blob/master/examples/mysql-galera/image/docker-entrypoint.sh
 # env: WSREP_CLUSTER_ADDRESS, "gcomm://" for the main node other join to, or empty
 # args $1 =  number of nodes, like 5 => n1 n2 n3 n4 n5
-
+# $2 = SST wsrep method, or autoselect
+NAME=$(hostname)
 CONF_FILE=/etc/mysql/my.cnf
 # SST method, default xtrabackup-v2, fallback to mysqldump
-if test -f /usr/bin/wsrep_sst_xtrabackup-v2
-then
-  WSREP_SST=xtrabackup-v2
+if [ "$2" ]; then
+  WSREP_SST=$2
 else
-  WSREP_SST=mysqldump
+  if test -f /usr/bin/wsrep_sst_xtrabackup-v2
+  then
+    WSREP_SST=xtrabackup-v2
+  else
+    WSREP_SST=mysqldump
+  fi
 fi
 
 # set nodes own address
@@ -20,9 +25,9 @@ if [ -n "$WSREP_NODE_ADDRESS" ]; then
 fi
 
 # if the string is not defined or it only is 'gcomm://', this means bootstrap
-if [ -z "$WSREP_CLUSTER_ADDRESS" -o "$WSREP_CLUSTER_ADDRESS" == "gcomm://" ]; then
+if [ -z "$WSREP_CLUSTER_ADDRESS" -o "$WSREP_CLUSTER_ADDRESS" = "gcomm://" ]; then
   # if empty, set to 'gcomm://'
-  # NOTE: this list does not imply membership. 
+  # NOTE: this list does not imply membership.
   # It only means "obtain SST and join from one of these..."
   if [ -z "$WSREP_CLUSTER_ADDRESS" ]; then
     WSREP_CLUSTER_ADDRESS="gcomm://"
@@ -33,7 +38,7 @@ if [ -z "$WSREP_CLUSTER_ADDRESS" -o "$WSREP_CLUSTER_ADDRESS" == "gcomm://" ]; th
     NODE_SERVICE_HOST="n${NUM}"
 
     # if not its own IP, then add it
-    if [ $(expr "$HOSTNAME" : "n${NUM}") -eq 0 ]; then
+    if [ $(expr "$name" : "n${NUM}") -eq 0 ]; then
       # if not the first bootstrap node add comma
       if [ $WSREP_CLUSTER_ADDRESS != "gcomm://" ]; then
         WSREP_CLUSTER_ADDRESS="${WSREP_CLUSTER_ADDRESS},"
@@ -44,15 +49,15 @@ if [ -z "$WSREP_CLUSTER_ADDRESS" -o "$WSREP_CLUSTER_ADDRESS" == "gcomm://" ]; th
   done
 fi
 
-# WSREP_CLUSTER_ADDRESS is now complete and will be interpolated into the 
+# WSREP_CLUSTER_ADDRESS is now complete and will be interpolated into the
 # cluster address string (wsrep_cluster_address) in the cluster
 # configuration file, cluster.cnf
 if [ -n "$WSREP_CLUSTER_ADDRESS" -a "$WSREP_CLUSTER_ADDRESS" != "gcomm://" ]; then
   sed -i -e "s|^#wsrep_cluster_address = .*$|wsrep_cluster_address = ${WSREP_CLUSTER_ADDRESS}|" $CONF_FILE
 fi
 
-# random server ID needed
-sed -i -e "s/^#server\-id =.*$/server-id = ${RANDOM}/" $CONF_FILE
+seed=$(hostname -I | sed -e 's/ /\n/' | grep -v '^$'  | tail -1 | awk -F. '{print $3 * 256 + $4}')
+sed -i -e "s/^#server\-id =.*$/server-id = ${seed}/" $CONF_FILE
 
 # settings for SST, prov opts and binding
 sed -i -e "s/^#bind-address =.*$/bind-address = $WSREP_NODE_ADDRESS/" $CONF_FILE

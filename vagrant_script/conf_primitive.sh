@@ -1,7 +1,8 @@
 #!/bin/sh
-# Configures the rabbitmq OCF primitive
+# Configures the rabbitmq OCF primitive for a given SST method ($1)
 # wait for the crmd to become ready
 # Protect from an incident running on hosts which aren't n1, n2, etc.
+sst_method=${1:-xtrabackup-v2}
 name=$(hostname)
 echo $name | grep -q "^n[0-9]\+"
 [ $? -eq 0 ] || exit 1
@@ -29,6 +30,7 @@ do
 EOF
   crm --force configure primitive p_mysql ocf:mysql:mysql \
         params debug="true" config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
+        wsrep_sst_method="${sst_method}" \
         pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
         op monitor interval=60 timeout=90 \
         op start interval=0 timeout=60 \

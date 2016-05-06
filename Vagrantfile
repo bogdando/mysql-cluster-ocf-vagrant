@@ -25,6 +25,7 @@ SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg ['smoketest_wait']
 GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
 GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg ['galera_distro']
 MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
+WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg ['wsrep_sst_method']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
 JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] || cfg ['jepsen_testcase']
@@ -49,7 +50,8 @@ end
 
 # Render a pacemaker primitive configuration
 corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh")
-primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh")
+primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
+  [], [WSREP_SST_METHOD])
 cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
@@ -71,8 +73,9 @@ end
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
 conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
-  "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1])
-conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [], [SLAVES_COUNT+1])
+  "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1, WSREP_SST_METHOD])
+conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [],
+  [SLAVES_COUNT+1, WSREP_SST_METHOD])
 
 # Setup docker dropins, lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
