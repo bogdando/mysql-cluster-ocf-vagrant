@@ -48,10 +48,10 @@ def docker_exec (name, script)
   system "docker exec -it #{name} #{script}"
 end
 
-# Render a pacemaker primitive configuration
+# Render a pacemaker primitive configuration with a seed node n1
 corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh")
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
-  [], [WSREP_SST_METHOD])
+  ["SEED=n1"], [WSREP_SST_METHOD])
 cib_cleanup = shell_script("/vagrant/vagrant_script/conf_cib_cleanup.sh")
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",

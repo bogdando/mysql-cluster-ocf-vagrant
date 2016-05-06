@@ -2,8 +2,11 @@
 # Smoke test for a DB cluster of given # of nodes as $1,
 # wait for a given $WAIT env var
 # run on remote node $2, if given or on itself.
-at_node="${2:-$HOSTNAME}"
-cmd="ssh ${at_node} timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
+if [ "$2" = "$(hostname)" ]; then
+  cmd="timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
+else
+  cmd="ssh ${at_node} timeout --signal=KILL 10 mysql -uroot -proot -Nbe \"show global status like 'wsrep%'\""
+fi
 count=0
 result="FAILED"
 throw=1
