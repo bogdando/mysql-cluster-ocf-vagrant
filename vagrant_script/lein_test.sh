@@ -16,6 +16,8 @@ fi
 docker start jepsen || PURGE=true
 
 # Make custom builds only when purging as well
+JEPSON_VER=0.1.1-SNAPSHOT
+GALERA_VER=0.1.0-SNAPSHOT
 if [ "${PURGE}" = "true" ]; then
   docker stop jepsen && docker rm -f -v jepsen
   # Run lein to make a custom galera dependency build
@@ -53,16 +55,16 @@ if [ "${PURGE}" = "true" ]; then
     --name jepsen -h jepsen \
     pandeiro/lein:latest
 
-  # install dependency
-    docker exec -it jepsen bash -c "apt-get update"
-    docker exec -it jepsen bash -c "apt-get -y install gnuplot-qt"
+  # install dependency for perf checker (skip)
+  # docker exec -it jepsen bash -c "apt-get update"
+  # docker exec -it jepsen bash -c "apt-get -y install gnuplot-qt"
   # copy custom jar builds
-  dir_galera=resources/jepsen/galera/jepsen.galera/0.1.0-SNAPSHOT
-  dir_jepsen=resources/jepsen/jepsen/0.1.0-SNAPSHOT/
+  dir_galera=resources/jepsen/galera/jepsen.galera/${GALERA_VER}
+  dir_jepsen=resources/jepsen/jepsen/${JEPSON_VER}
   docker exec -it jepsen bash -c "mkdir -p $dir_galera"
-  docker exec -it jepsen bash -c "cp -f /custom2/jepsen.galera-0.1.0-SNAPSHOT*  $dir_galera"
+  docker exec -it jepsen bash -c "cp -f /custom2/jepsen.galera-${GALERA_VER}*  $dir_galera"
   docker exec -it jepsen bash -c "mkdir -p $dir_jepsen"
-  docker exec -it jepsen bash -c "cp -f /custom/jepsen-0.1.0-SNAPSHOT*  $dir_jepsen"
+  docker exec -it jepsen bash -c "cp -f /custom/jepsen-${JEPSON_VER}*  $dir_jepsen"
 fi
 
 testcase="lein test"
