@@ -189,7 +189,6 @@ Vagrant.configure(2) do |config|
         "--ip=#{IP24NET}.2", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
     end
     config.trigger.after :up, :option => { :vm => 'n1' } do
-      docker_exec("n1","/usr/sbin/sshd")
       docker_exec("n1","/usr/sbin/rsyslogd")
       docker_exec("n1","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} #{redirect}") }
@@ -212,7 +211,6 @@ Vagrant.configure(2) do |config|
           "--ip=#{IP24NET}.#{ip_ind}", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
       end
       config.trigger.after :up, :option => { :vm => "n#{index}" } do
-        docker_exec("n#{index}","/usr/sbin/sshd")
         docker_exec("n#{index}","/usr/sbin/rsyslogd")
         docker_exec("n#{index}","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
         COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} #{redirect}") }
