@@ -101,6 +101,9 @@ across those, update the Vagrant settings file, for example:
   example ``for i in 1 2 3 4 5; do docker exec -it n$i bash -c "iptables -F -w ;
   iptables -X -w"; done``
 
+* If the terminal session looks "broken" after the ``vagrant up/down``, issue a
+  ``reset`` command as well.
+
 ## Troubleshooting
 
 You may want to use the command like:

@@ -34,7 +34,7 @@ EOF
           wsrep_sst_method="${sst_method}" \
           pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
           op monitor interval=60 timeout=90 \
-          op start interval=0 timeout=60 \
+          op start interval=0 timeout=330 \
           op stop interval=0 timeout=120 \
           meta migration-threshold=10 failure-timeout=30s resource-stickiness=100 && \
     crm --force configure clone p_mysql-clone p_mysql

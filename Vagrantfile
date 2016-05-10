@@ -72,9 +72,7 @@ end
 
 galera_conf_setup = shell_script("cp /vagrant/conf/my.cnf /etc/mysql/")
 wsrep_init_setup = shell_script("cp /vagrant/conf/wsrep-init-file /tmp/")
-conf_seed = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [
-  "WSREP_NODE_ADDRESS=gcomm://"], [SLAVES_COUNT+1, WSREP_SST_METHOD])
-conf_rest = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [],
+conf_wsrep = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [],
   [SLAVES_COUNT+1, WSREP_SST_METHOD])
 
 # Setup docker dropins, lein, jepsen and hosts/ssh access for it
@@ -173,7 +171,7 @@ Vagrant.configure(2) do |config|
 
   # Any conf tasks to be executed for all nodes should be added here as well
   COMMON_TASKS = [corosync_setup, galera_install, ra_ocf_setup, galera_conf_setup, wsrep_init_setup,
-    primitive_setup]
+    primitive_setup, conf_wsrep]
 
   if QUIET == "true" then
     redirect=">/dev/null 2>&1"
@@ -192,8 +190,6 @@ Vagrant.configure(2) do |config|
       docker_exec("n1","/usr/sbin/rsyslogd")
       docker_exec("n1","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
       COMMON_TASKS.each { |s| docker_exec("n1","#{s} #{redirect}") }
-      # Setup as the main cluster node the rest will join to
-      docker_exec("n1","#{conf_seed} >/dev/null 2>&1")
       # Wait and run a smoke test against a cluster, shall not fail
       docker_exec("n1","#{db_test}")
     end
@@ -214,7 +210,6 @@ Vagrant.configure(2) do |config|
         docker_exec("n#{index}","/usr/sbin/rsyslogd")
         docker_exec("n#{index}","#{ssh_setup} >/dev/null 2>&1") if USE_JEPSEN == "true"
         COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} #{redirect}") }
-        docker_exec("n#{index}","#{conf_rest} >/dev/null 2>&1")
         # Wait and run a smoke test against a cluster, shall not fail
         docker_exec("n#{index}","#{db_test}") unless USE_JEPSEN == "true"
       end
