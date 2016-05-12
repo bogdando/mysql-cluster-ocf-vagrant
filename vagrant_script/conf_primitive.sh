@@ -37,7 +37,8 @@ EOF
           op start interval=0 timeout=330 \
           op stop interval=0 timeout=120 \
           meta migration-threshold=10 failure-timeout=30s resource-stickiness=100 && \
-    crm --force configure clone p_mysql-clone p_mysql
+    crm --force configure clone p_mysql-clone p_mysql \
+          meta requires="nothing"
     [ $? -eq 0 ] && break
     count=$((count+10))
     sleep 10
