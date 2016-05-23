@@ -19,7 +19,16 @@ echo "percona-xtradb-cluster-56 mysql-server-5.6/start_on_boot boolean false" | 
 echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_password_again password root" | debconf-set-selections
 echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_password password root" | debconf-set-selections
 apt-get -y install percona-xtradb-cluster-server-5.6 socat libev4 libnuma1 libaio1
-apt-get -y install percona-galera-3 || apt-get -y install galera-3
+
+# Get the most recent Galera replication library 3.16
+#apt-get -y install percona-galera-3 || apt-get -y install galera-3
+#mkdir -p /usr/lib/galera/
+#cd /usr/lib/galera/
+#ln -sf /usr/lib/galera3/libgalera_smm.so .
+#cd -
+wget http://releases.galeracluster.com/debian/pool/main/g/galera-3/galera-3_25.3.16-1jessie_amd64.deb \
+-O /tmp/galera-3_25.3.16-1jessie_amd64.deb
+dpkg -i --force-all /tmp/galera-3_25.3.16-1jessie_amd64.deb
 
 if [ "$1" ]; then
   #In place upgrade from a given tar for percona
@@ -41,11 +50,6 @@ fi
 wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.3.4/binary/debian/wily/x86_64/percona-xtrabackup_2.3.4-1.wily_amd64.deb \
 -O /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
 dpkg -i --force-all /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
-
-mkdir -p /usr/lib/galera/
-cd /usr/lib/galera/
-ln -sf /usr/lib/galera3/libgalera_smm.so .
-cd -
 
 if [ "$1" ]; then
   mysqld --initialize --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
