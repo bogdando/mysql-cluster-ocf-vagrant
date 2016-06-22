@@ -13,4 +13,6 @@ echo "Drop-in new storage path for a docker service unit"
 # https://github.com/docker/docker/issues/14491
 printf "%b\n" "[Service]\nExecStart=" > "${drop_in}${override}"
 grep -E '^ExecStart' $unit | sed -e 's_$_& -g /jepsen_' >> "${drop_in}${override}"
-systemctl daemon-reload && systemctl restart docker
+
+systemctl daemon-reload
+systemctl restart docker
