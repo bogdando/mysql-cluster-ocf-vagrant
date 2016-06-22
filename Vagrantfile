@@ -35,9 +35,14 @@ if USE_JEPSEN == "true"
 else
   SLAVES_COUNT = (ENV['SLAVES_COUNT'] || cfg['slaves_count']).to_i
 end
+if QUIET == "true"
+  REDIRECT=">/dev/null 2>&1"
+else
+  REDIRECT=">/dev/null"
+end
 
-def shell_script(filename, env=[], args=[])
-  shell_script_crafted = "/bin/bash -c \"#{env.join ' '} #{filename} #{args.join ' '} 2>/dev/null\""
+def shell_script(filename, env=[], args=[], redirect=REDIRECT)
+  shell_script_crafted = "/bin/bash -c \"#{env.join ' '} #{filename} #{args.join ' '} #{redirect}\""
   @logger.info("Crafted shell-script: #{shell_script_crafted})")
   shell_script_crafted
 end
@@ -91,9 +96,9 @@ end
 hosts_setup = shell_script("/vagrant/vagrant_script/conf_hosts.sh", [], [entries])
 
 db_test_remote = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1, "n1"])
+  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1, "n1"], "1>&2")
 db_test = shell_script("/vagrant/vagrant_script/test_dbcluster.sh",
-  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1])
+  ["WAIT=#{SMOKETEST_WAIT}"], [SLAVES_COUNT+1], "1>&2")
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
@@ -121,6 +126,8 @@ Vagrant.configure(2) do |config|
     system <<-SCRIPT
     docker network rm "vagrant-#{OCF_RA_PROVIDER}" >/dev/null 2>&1
     SCRIPT
+    # fix terminal bugs
+    system "reset"
   end
 
   config.vm.provider :docker do |d, override|
@@ -156,13 +163,13 @@ Vagrant.configure(2) do |config|
           "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
       end
       config.trigger.after :up, :option => { :vm => 'n0' } do
-        docker_exec("n0","#{jepsen_setup} >/dev/null 2>&1")
-        docker_exec("n0","#{hosts_setup} >/dev/null 2>&1")
+        docker_exec("n0","#{jepsen_setup}")
+        docker_exec("n0","#{hosts_setup}")
+        docker_exec("n0","#{ssh_setup}")
         # Wait and run a smoke test against a cluster, shall not fail
         docker_exec("n0","#{db_test_remote}") or raise "Smoke test: FAILED to assemble a cluster"
         # Then run all of the jepsen tests for the given app, and it *may* fail
         docker_exec("n0","#{docker_dropins}")
-        docker_exec("n0","#{ssh_setup} >/dev/null 2>&1")
         docker_exec("n0","#{lein_test}")
         # Verify if the cluster was recovered
         docker_exec("n0","#{db_test_remote}")
@@ -174,12 +181,6 @@ Vagrant.configure(2) do |config|
   COMMON_TASKS = [root_login, ssh_setup, corosync_setup, galera_install, ra_ocf_setup,
     galera_conf_setup, wsrep_init_setup, primitive_setup, conf_wsrep]
 
-  if QUIET == "true" then
-    redirect=">/dev/null 2>&1"
-  else
-    redirect=""
-  end
-
   config.vm.define "n1", primary: true do |config|
     config.vm.host_name = "n1"
     config.vm.provider :docker do |d, override|
@@ -189,7 +190,7 @@ Vagrant.configure(2) do |config|
     end
     config.trigger.after :up, :option => { :vm => 'n1' } do
       docker_exec("n1","/usr/sbin/rsyslogd")
-      COMMON_TASKS.each { |s| docker_exec("n1","#{s} #{redirect}") }
+      COMMON_TASKS.each { |s| docker_exec("n1","#{s}") }
       # Wait and run a smoke test against a cluster, shall not fail
       docker_exec("n1","#{db_test}")
     end
@@ -208,7 +209,7 @@ Vagrant.configure(2) do |config|
       end
       config.trigger.after :up, :option => { :vm => "n#{index}" } do
         docker_exec("n#{index}","/usr/sbin/rsyslogd")
-        COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s} #{redirect}") }
+        COMMON_TASKS.each { |s| docker_exec("n#{index}","#{s}") }
         # Wait and run a smoke test against a cluster, shall not fail
         docker_exec("n#{index}","#{db_test}") unless USE_JEPSEN == "true"
       end
