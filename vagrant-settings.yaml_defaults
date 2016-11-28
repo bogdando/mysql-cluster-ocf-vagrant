@@ -1,19 +1,21 @@
 # copy it to vagrant-settings.yaml then Vagrantfile
 # will use values from this file
 
-# Number of additional nodes to the n1 to be run
+# Number of additional nodes to the n1 to be run and cgroup limits
 slaves_count: 2
+cpu: 500
+memory: 512M
 # 1st 3 numbers of a required /24 IPv4 docker net
 ip24net: 10.10.10
 # Docker image name (Docker registry)
-docker_image: bogdando/pacemaker-cluster-ocf-wily
+docker_image: bogdando/pacemaker-cluster-ocf-xenial
 # /sbin/init, /usr/sbin/sshd -D or suchlike
 docker_cmd: /sbin/init
 # Docker mounts as a list or a ws separated
 docker_mounts:
   - jepsen:/jepsen
-  - /tmp/sshkey:/root/.ssh/id_rsa:ro
-# which app/case to test with jepsen, e.g. galera, rabbitmq, jepsen, meowdb
+docker_driver: overlay2
+# which app to test with jepsen, e.g. rabbitmq, jepsen, meowdb
 # leave empty to run all of the test cases for the app
 jepsen_app: percona_ocf_pcmk
 jepsen_testcase: bank-test-single
@@ -21,6 +23,7 @@ jepsen_testcase: bank-test-single
 ocf_ra_provider: mysql
 # How to upload the OCF RA : none/copy from/wget from a given path
 ocf_ra_path: https://raw.githubusercontent.com/openstack/fuel-library/master/files/fuel-ha-utils/ocf/mysql-wss
+storage: /var/tmp/rmq
 upload_method: wget
 # which packages versions to use, or false
 galera_distro: percona
@@ -33,4 +36,4 @@ smoketest_wait: 600
 # run jepsen tests or not
 use_jepsen: "false"
 # redirect tasks output to /dev/null or not
-quiet: "true"
+quiet: "false"

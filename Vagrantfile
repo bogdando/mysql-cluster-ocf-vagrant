@@ -14,26 +14,32 @@ else
 end
 
 IP24NET = ENV['IP24NET'] || cfg['ip24net']
-IMAGE_NAME = ENV['IMAGE_NAME'] || cfg['image_name']
 DOCKER_IMAGE = ENV['DOCKER_IMAGE'] || cfg['docker_image']
 DOCKER_CMD = ENV['DOCKER_CMD'] || cfg['docker_cmd']
 DOCKER_MOUNTS = ENV['DOCKER_MOUNTS'] || cfg['docker_mounts']
+DOCKER_DRIVER = ENV['DOCKER_DRIVER'] || cfg['docker_driver']
 OCF_RA_PROVIDER = ENV['OCF_RA_PROVIDER'] || cfg['ocf_ra_provider']
 OCF_RA_PATH = ENV['OCF_RA_PATH'] || cfg['ocf_ra_path']
-UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg ['upload_method']
-SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg ['smoketest_wait']
-GALERA_VER = ENV['GALERA_VER'] || cfg ['galera_ver']
-GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg ['galera_distro']
-MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg ['mysql_wsrep_ver']
-WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg ['wsrep_sst_method']
-USE_JEPSEN = ENV['USE_JEPSEN'] || cfg ['use_jepsen']
-JEPSEN_APP = ENV['JEPSEN_APP'] || cfg ['jepsen_app']
-JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] || cfg ['jepsen_testcase']
-QUIET = ENV['QUIET'] || cfg ['quiet']
+UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg['upload_method']
+SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg['smoketest_wait']
+GALERA_VER = ENV['GALERA_VER'] || cfg['galera_ver']
+GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg['galera_distro']
+MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg['mysql_wsrep_ver']
+WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg['wsrep_sst_method']
+USE_JEPSEN = ENV['USE_JEPSEN'] || cfg['use_jepsen']
+JEPSEN_APP = ENV['JEPSEN_APP'] || cfg['jepsen_app']
+JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] ||cfg['jepsen_testcase']
+QUIET = ENV['QUIET'] || cfg['quiet']
+STORAGE= ENV['STORAGE'] || cfg['storage']
+NODES=ENV['NODES'] || cfg['nodes'] || 'n1 n2 n3 n4 n5'
 if USE_JEPSEN == "true"
-  SLAVES_COUNT = 4
+  SLAVES_COUNT = NODES.split(' ').length - 1
+  CPU = ENV['CPU'] || (1000 / (SLAVES_COUNT + 1) rescue 200)
+  MEM = ENV['MEMORY'] || '256M'
 else
   SLAVES_COUNT = (ENV['SLAVES_COUNT'] || cfg['slaves_count']).to_i
+  CPU = ENV['CPU'] || cfg['cpu']
+  MEM = ENV['MEMORY'] || cfg['memory']
 end
 if QUIET == "true"
   REDIRECT=">/dev/null 2>&1"
@@ -55,12 +61,12 @@ def docker_exec (name, script)
 end
 
 # Render a pacemaker primitive configuration with a seed node n1
-corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh")
+corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh", ["CNT=#{SLAVES_COUNT+1}"])
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
-  ["SEED=n1"], [WSREP_SST_METHOD])
+  ["SEED=n1", "STORAGE=#{STORAGE}"], [WSREP_SST_METHOD])
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
-   "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}"])
+   "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}", "STORAGE=#{STORAGE}"])
 
 case GALERA_DISTRO
 when "percona"
@@ -82,8 +88,9 @@ conf_wsrep = shell_script("/vagrant/vagrant_script/conf_cluster.sh", [],
 
 # Setup docker dropins, lein, jepsen and hosts/ssh access for it
 jepsen_setup = shell_script("/vagrant/vagrant_script/conf_jepsen.sh")
-docker_dropins = shell_script("/vagrant/vagrant_script/conf_docker_dropins.sh")
-lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", ["PURGE=true"],
+docker_dropins = shell_script("/vagrant/vagrant_script/conf_docker_dropins.sh",
+  ["DOCKER_DRIVER=#{DOCKER_DRIVER}"])
+lein_test = shell_script("/vagrant/vagrant_script/lein_test.sh", ["PURGE=true", "NODES='#{NODES}'"],
   [JEPSEN_APP, JEPSEN_TESTCASE], "1>&2")
 ssh_setup = shell_script("/vagrant/vagrant_script/conf_ssh.sh",[], [SLAVES_COUNT+1], "1>&2")
 root_login = shell_script("/vagrant/vagrant_script/conf_root_login.sh")
@@ -126,8 +133,6 @@ Vagrant.configure(2) do |config|
     system <<-SCRIPT
     docker network rm "vagrant-#{OCF_RA_PROVIDER}" >/dev/null 2>&1
     SCRIPT
-    # fix terminal bugs
-    system "reset"
   end
 
   config.vm.provider :docker do |d, override|
@@ -160,6 +165,7 @@ Vagrant.configure(2) do |config|
       config.vm.provider :docker do |d, override|
         d.name = "n0"
         d.create_args = [ "--stop-signal=SIGKILL", "-i", "-t", "--privileged", "--ip=#{IP24NET}.254",
+          "--memory=#{MEM}", "--cpu-shares=#{CPU}",
           "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
       end
       config.trigger.after :up, :option => { :vm => 'n0' } do
@@ -185,7 +191,8 @@ Vagrant.configure(2) do |config|
     config.vm.host_name = "n1"
     config.vm.provider :docker do |d, override|
       d.name = "n1"
-      d.create_args = [ "--stop-signal=SIGKILL", "--shm-size=500m", "-i", "-t", "--cap-add=NET_ADMIN",
+      d.create_args = [ "--stop-signal=SIGKILL", "-i", "-t", "--cap-add=NET_ADMIN",
+        "--memory=#{MEM}", "--cpu-shares=#{CPU}",
         "--ip=#{IP24NET}.2", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
     end
     config.trigger.after :up, :option => { :vm => 'n1' } do
@@ -205,7 +212,8 @@ Vagrant.configure(2) do |config|
       config.vm.host_name = "n#{index}"
       config.vm.provider :docker do |d, override|
         d.name = "n#{index}"
-        d.create_args = ["--stop-signal=SIGKILL", "--shm-size=500m", "-i", "-t", "--cap-add=NET_ADMIN",
+        d.create_args = ["--stop-signal=SIGKILL", "-i", "-t", "--cap-add=NET_ADMIN",
+          "--memory=#{MEM}", "--cpu-shares=#{CPU}",
           "--ip=#{IP24NET}.#{ip_ind}", "--net=vagrant-#{OCF_RA_PROVIDER}", docker_volumes].flatten
       end
       config.trigger.after :up, :option => { :vm => "n#{index}" } do

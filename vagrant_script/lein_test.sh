@@ -48,6 +48,7 @@ if [ "${PURGE}" = "true" ]; then
     -v /jepsen/jepsen/jepsen/target:/custom:ro \
     -v /jepsen/jepsen/galera/target:/custom2:ro \
     -v /jepsen/logs:/app/store \
+    -e "NODES=\"${NODES}\"" \
     --entrypoint /bin/bash \
     --name jepsen -h jepsen \
     pandeiro/lein:latest

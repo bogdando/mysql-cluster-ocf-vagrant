@@ -1,6 +1,7 @@
 #!/bin/sh
 # Install the mariadb galera 10 packages from debian jessie.
 # Protect from an incident running on hosts which aren't n1, n2, etc.
+STORAGE=${STORAGE:-/tmp}
 hostname | grep -q "^n[0-9]\+"
 [ $? -eq 0 ] || exit 1
 
@@ -17,8 +18,8 @@ apt-get -y install socat mariadb-galera-server percona-xtrabackup galera-3 netca
 # w/a https://jira.mariadb.org/browse/MDEV-9708 and "xbstream: Can't create/write to file '././backup-my.cnf' (Errcode: 17 - File exists)"
 wget https://github.com/percona/percona-xtradb-cluster/raw/5.6/scripts/wsrep_sst_xtrabackup-v2.sh -O /usr/bin/wsrep_sst_xtrabackup-v2
 wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.3.4/binary/debian/wily/x86_64/percona-xtrabackup_2.3.4-1.wily_amd64.deb \
--O /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
-dpkg -i --force-all /tmp/percona-xtrabackup_2.3.4-1.wily_amd64.deb
+-O /${STORAGE}/percona-xtrabackup_2.3.4-1.wily_amd64.deb
+dpkg -i --force-all /${STORAGE}/percona-xtrabackup_2.3.4-1.wily_amd64.deb
 
 mysql_install_db --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
 service mysql stop
