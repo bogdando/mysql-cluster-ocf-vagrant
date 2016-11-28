@@ -42,34 +42,18 @@ across those, update the Vagrant settings file, for example:
   `galera_ver: 25.3.5`, and `mysql_wsrep_ver: 5.6.16-25.5`.
 * To install a Percona v5.6 from Jessie mirrors, put the `galera_distro: percona`
   and leave `galera_ver` and `mysql_wsrep_ver` empty.
-* (TODO) Or to install a custom build, use for example
-  `galera_ver: /jepsen/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar`,
-  then prepare the shared volume jepsen:
-  ```
-  docker run -itd --entrypoint /bin/bash --name prep \
-  -v jepsen:/mount bogdando/pacemaker-cluster-ocf-wily
 
-  docker exec -it prep wget \
-  https://www.percona.com/downloads/Percona-Server-5.6/Percona-Server-5.6.29-76.2/binary/debian/wily/x86_64/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar \
-  -O /mount/Percona-Server-5.6.29-76.2-rddf26fe-wily-x86_64-bundle.tar
+## Caching
 
-  docker exec -it prep sync
-  sync; docker stop prep && docker rm prep
-  ```
-* (TODO) To install Percona v5.7, put the `galera_distro: percona` and
-  `galera_ver: /jepsen/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar`,
-  then prepare the shared volume jepsen:
-  ```
-  docker run -itd --entrypoint /bin/bash --name prep \
-  -v jepsen:/mount bogdando/pacemaker-cluster-ocf-wily
-
-  docker exec -it prep wget \
-  https://www.percona.com/downloads/Percona-Server-5.7/Percona-Server-5.7.11-4/binary/debian/wily/x86_64/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar \
-  -O /mount/Percona-Server-5.7.11-4-r5c940e1-wily-x86_64-bundle.tar
-
-  docker exec -it prep sync
-  sync; docker stop prep && docker rm prep
-  ```
+Use `docker_mounts` to specify pre-downloaded package, f.e.:
+```
+wget http://releases.galeracluster.com/debian/pool/main/g/galera-3/galera-3_25.3.19-1jessie_amd64.deb \
+-O /var/tmp/galera-3_25.3.19-1jessie_amd64.deb
+wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.3.5/binary/debian/wily/x86_64/percona-xtrabackup_2.3.5-1.wily_amd64.deb
+-O /var/tmp/percona-xtrabackup_2.3.5-1.wily_amd64.deb
+export DOCKER_MOUNTS="/var/tmp:/var/tmp:ro jepsen:/jepsen:ro /tmp/sshkey:/root/.ssh/id_rsa:ro"
+export STORAGE="/var/tmp"
+```
 
 ## Known issues
 

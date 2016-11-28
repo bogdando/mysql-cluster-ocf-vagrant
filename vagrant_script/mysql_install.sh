@@ -12,17 +12,18 @@ apt-get update
 echo "mysql-server-5.6 mysql-server/root_password password root" | debconf-set-selections
 echo "mysql-server-5.6 mysql-server/root_password_again password root" | debconf-set-selections
 echo "mysql-server-5.6 mysql-server-5.6/start_on_boot boolean false" | debconf-set-selections
-apt-get -y install socat mysql-server
+apt-get -y --no-install-recommends install socat mysql-server
 
 file1="galera-$1-amd64.deb"
-wget "https://launchpad.net/galera/3.x/$1/+download/$file1" -O "/${STORAGE}/$file1"
+wget "https://launchpad.net/galera/3.x/$1/+download/$file1" -O "${STORAGE}/$file1"
 
 # extract the version prefix
 v1="${2%*.*.*}"
 file2="mysql-server-wsrep-$2-amd64.deb"
-wget "https://launchpad.net/codership-mysql/$v1/$2/+download/$file2" -O "/${STORAGE}/$file2"
-dpkg --force-all -i "/${STORAGE}/$file1" "/${STORAGE}/$file2"
+[ -f "${STORAGE}/$file2" ] || wget "https://launchpad.net/codership-mysql/$v1/$2/+download/$file2" -O "${STORAGE}/$file2"
+dpkg --force-all -i "${STORAGE}/$file1" "${STORAGE}/$file2"
 
 mysql_install_db --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
 service mysql stop
+sync
 exit $?
