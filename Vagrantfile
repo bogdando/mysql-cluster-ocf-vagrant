@@ -63,10 +63,10 @@ end
 # Render a pacemaker primitive configuration with a seed node n1
 corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh", ["CNT=#{SLAVES_COUNT+1}"])
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
-  ["SEED=n1", "STORAGE=#{STORAGE}"], [WSREP_SST_METHOD])
+  ["SEED=n1", "STORAGE='#{STORAGE}'"], [WSREP_SST_METHOD])
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
-  ["UPLOAD_METHOD=#{UPLOAD_METHOD}", "OCF_RA_PATH=#{OCF_RA_PATH}",
-   "OCF_RA_PROVIDER=#{OCF_RA_PROVIDER}", "STORAGE=#{STORAGE}"])
+  ["UPLOAD_METHOD='#{UPLOAD_METHOD}'", "OCF_RA_PATH='#{OCF_RA_PATH}'",
+   "OCF_RA_PROVIDER='#{OCF_RA_PROVIDER}'", "STORAGE='#{STORAGE}'"])
 
 case GALERA_DISTRO
 when "percona"
