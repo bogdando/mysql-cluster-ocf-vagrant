@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 # Install the codership mysql server packages of a given versions ($1, $2),
 # if requested. Note, that is not the percona packages.
 # Protect from an incident running on hosts which aren't n1, n2, etc.
@@ -26,4 +26,3 @@ dpkg --force-all -i "${STORAGE}/$file1" "${STORAGE}/$file2"
 mysql_install_db --user=mysql --basedir=/usr/ --ldata=/var/lib/mysql/
 service mysql stop
 sync
-exit $?

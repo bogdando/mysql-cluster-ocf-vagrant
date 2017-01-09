@@ -26,6 +26,7 @@ GALERA_VER = ENV['GALERA_VER'] || cfg['galera_ver']
 GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg['galera_distro']
 MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg['mysql_wsrep_ver']
 WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg['wsrep_sst_method']
+XTRA_VER = ENV['XTRA_VER'] || cfg['xtra_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg['use_jepsen']
 JEPSEN_APP = ENV['JEPSEN_APP'] || cfg['jepsen_app']
 JEPSEN_TESTCASE = ENV['JEPSEN_TESTCASE'] ||cfg['jepsen_testcase']
@@ -70,13 +71,15 @@ ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
 
 case GALERA_DISTRO
 when "percona"
-  galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh", [],
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh",
+  ["XTRA_VER='#{XTRA_VER}'"],
   [GALERA_VER])
 when "codership"
   galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
   [GALERA_VER, MYSQL_WSREP_VER])
 when "mariadb"
-  galera_install = shell_script("/vagrant/vagrant_script/mysql_install3.sh")
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install3.sh",
+  ["XTRA_VER='#{XTRA_VER}'"], [])
 else
   raise "Distro #{GALERA_DISTRO} is not supported"
 end
@@ -160,6 +163,7 @@ Vagrant.configure(2) do |config|
   if USE_JEPSEN == "true"
     config.vm.define "n0", primary: true do |config|
       docker_volumes << [ "-v", "/sys/fs/cgroup:/sys/fs/cgroup",
+        "-v", "/usr/bin/docker:/usr/bin/docker:ro",
         "-v", "/var/run/docker.sock:/var/run/docker.sock" ]
       config.vm.host_name = "n0"
       config.vm.provider :docker do |d, override|

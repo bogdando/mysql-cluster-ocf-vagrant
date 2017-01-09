@@ -32,6 +32,7 @@ galera_distro: percona
 galera_ver: 25.3.19
 #mysql_wsrep_ver: 5.6.16-25.5
 wsrep_sst_method: xtrabackup-v2
+xtra_ver: 2.3.5-1.jessie
 # smoke test timeout, includes waiting for the OCF resource to start up
 # and form a cluster, if any
 smoketest_wait: 600
