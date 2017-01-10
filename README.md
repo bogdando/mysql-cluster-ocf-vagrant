@@ -36,12 +36,13 @@ The `./vagrant_script/mysql_install2.sh` installs Percona packages. And
 `./vagrant_script/mysql_install3.sh` installs MariaDB packages. To switch
 across those, update the Vagrant settings file, for example:
 
-* To install a MariaDB Galera v10 (from a Debian Jessie mirror) put the
-  `galera_distro: mariadb`.
-* To install a Codership Galera, put the `galera_distro: codership` and
-  `galera_ver: 25.3.5`, and `mysql_wsrep_ver: 5.6.16-25.5`.
-* To install a Percona v5.6 from Jessie mirrors, put the `galera_distro: percona`
-  and leave `galera_ver` and `mysql_wsrep_ver` empty.
+* To install MariaDB Galera v10 (from a Debian Jessie mirror) put the
+  `galera_distro: mariadb`. It uses xtrabackup-v2 sst method (see ``*xtra*``
+  vars for the tool versions.
+* To install Codership Galera, put the `galera_distro: codership`. It works
+  only with ``wsrep_sst_method: mysqldump``.
+* To install latest Percona v5.6 from Jessie mirrors, put the
+  `galera_distro: percona`. It uses xtrabackup-v2 sst as well.
 
 ## Caching
 

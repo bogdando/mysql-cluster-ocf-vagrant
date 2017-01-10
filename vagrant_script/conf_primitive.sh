@@ -4,7 +4,7 @@
 # Protect from an incident running on hosts which aren't n1, n2, etc.
 OCF_RA_PROVIDER=${OCF_RA_PROVIDER:-mysql}
 STORAGE=${STORAGE:-/tmp}
-sst_method=${1:-xtrabackup-v2}
+SST_METHOD=${SST_METHOD:-xtrabackup-v2}
 name=$(hostname)
 echo $name | grep -q "^n[0-9]\+"
 [ $? -eq 0 ] || exit 1
@@ -35,7 +35,7 @@ if [ "${name}" = "${SEED}" ] ; then
 EOF
     crm --force configure primitive p_mysql ocf:$OCF_RA_PROVIDER:$OCF_RA_PROVIDER \
           params debug="true" config="/etc/mysql/my.cnf" test_passwd="root" test_user="root" \
-          wsrep_sst_method="${sst_method}" \
+          wsrep_sst_method="${SST_METHOD}" \
           pid="/var/run/mysqld/mysqld.pid" socket="/var/run/mysqld/mysqld.sock" \
           op monitor interval=60 timeout=90 \
           op start interval=0 timeout=330 \

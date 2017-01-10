@@ -1,6 +1,5 @@
 #!/bin/sh -e
-# Install the percona galera 5.6 packages or from a given 5.7 tar path $1
-# if requested.
+# Install the latest percona galera 5.6 packages and given ver of xtrabackup tool
 # Protect from an incident running on hosts which aren't n1, n2, etc.
 STORAGE=${STORAGE:-/tmp}
 XTRA_VER=${XTRA_VER:-2.3.5-1.jessie}
@@ -23,9 +22,6 @@ echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_passw
 echo "percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-server/root_password password root" | debconf-set-selections
 apt-get -y --no-install-recommends install percona-xtradb-cluster-server-5.6 percona-xtradb-cluster-common-5.6 percona-xtradb-cluster-client-5.6 mysql-common percona-xtradb-cluster-galera-3
 
-# Get the most recent Galera replication library
-#[ -f "${STORAGE}/galera-3_${1}-1jessie_amd64.deb" ] || wget http://releases.galeracluster.com/debian/pool/main/g/galera-3/galera-3_${1}-1jessie_amd64.deb -O /${STORAGE}/galera-3_${1}-1jessie_amd64.deb
-#dpkg -i --force-all /${STORAGE}/galera-3_${1}-1jessie_amd64.deb
 mkdir -p /usr/lib/galera
 ln -s /usr/lib/galera3/libgalera_smm.so /usr/lib/galera/libgalera_smm.so
 

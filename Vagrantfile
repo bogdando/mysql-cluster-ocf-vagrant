@@ -22,9 +22,7 @@ OCF_RA_PROVIDER = ENV['OCF_RA_PROVIDER'] || cfg['ocf_ra_provider']
 OCF_RA_PATH = ENV['OCF_RA_PATH'] || cfg['ocf_ra_path']
 UPLOAD_METHOD = ENV['UPLOAD_METHOD'] || cfg['upload_method']
 SMOKETEST_WAIT = ENV['SMOKETEST_WAIT'] || cfg['smoketest_wait']
-GALERA_VER = ENV['GALERA_VER'] || cfg['galera_ver']
 GALERA_DISTRO = ENV['GALERA_DISTRO'] || cfg['galera_distro']
-MYSQL_WSREP_VER = ENV['MYSQL_WSREP_VER'] || cfg['mysql_wsrep_ver']
 WSREP_SST_METHOD = ENV['WSREP_SST_METHOD'] || cfg['wsrep_sst_method']
 XTRA_VER = ENV['XTRA_VER'] || cfg['xtra_ver']
 USE_JEPSEN = ENV['USE_JEPSEN'] || cfg['use_jepsen']
@@ -64,7 +62,7 @@ end
 # Render a pacemaker primitive configuration with a seed node n1
 corosync_setup = shell_script("/vagrant/vagrant_script/conf_corosync.sh", ["CNT=#{SLAVES_COUNT+1}"])
 primitive_setup = shell_script("/vagrant/vagrant_script/conf_primitive.sh",
-  ["SEED=n1", "STORAGE='#{STORAGE}'"], [WSREP_SST_METHOD])
+  ["SEED=n1", "STORAGE='#{STORAGE}'", "SST_METHOD=#{WSREP_SST_METHOD}"])
 ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
   ["UPLOAD_METHOD='#{UPLOAD_METHOD}'", "OCF_RA_PATH='#{OCF_RA_PATH}'",
    "OCF_RA_PROVIDER='#{OCF_RA_PROVIDER}'", "STORAGE='#{STORAGE}'"])
@@ -72,14 +70,13 @@ ra_ocf_setup = shell_script("/vagrant/vagrant_script/conf_ra_ocf.sh",
 case GALERA_DISTRO
 when "percona"
   galera_install = shell_script("/vagrant/vagrant_script/mysql_install2.sh",
-  ["XTRA_VER='#{XTRA_VER}'"],
-  [GALERA_VER])
+  ["XTRA_VER='#{XTRA_VER}'"])
 when "codership"
-  galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh", [],
-  [GALERA_VER, MYSQL_WSREP_VER])
+  galera_install = shell_script("/vagrant/vagrant_script/mysql_install.sh")
+  raise if WSREP_SST_METHOD != 'mysqldump'
 when "mariadb"
   galera_install = shell_script("/vagrant/vagrant_script/mysql_install3.sh",
-  ["XTRA_VER='#{XTRA_VER}'"], [])
+  ["XTRA_VER='#{XTRA_VER}'"])
 else
   raise "Distro #{GALERA_DISTRO} is not supported"
 end
